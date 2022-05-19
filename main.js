@@ -1,25 +1,78 @@
-function preload(){
-  
-}
+prediction1="";
+prediction2="";
 
-function setup() {
-  canvas = createCanvas(640, 400);
-  canvas.position(110,250);
-  video=createCapture(VIDEO);
-  video.hide();
-  
-  tint_color="";
-}
+Webcam.set({
+    width:350,
+    height:300,
+    image_format:'png',
+    png_quality:90
+});
 
-function draw() {
-  image(video,0,0,640,480);
-  tint(tint_color);
-}
+camera=document.getElementById("camera");
+
+Webcam.attach('#camera');
 
 function take_snapshot(){
-    save('filteredphoto.png');
+    Webcam.snap(function(data_uri)
+    {
+        document.getElementById("result").innerHTML='<img id="captured_image" src="'+data_uri+'"/>';
+    });
 }
 
-function filter_tint(){
-    tint_color=document.getElementById("color_name").value;
+console.log('ml5 version',ml5.version);
+
+classifier = ml5.imageClassifier('https://teachablemachine.withgoogle.com/models/SEMHx09Za/model.json',modelLoaded);
+
+function modelLoaded(){
+    console.log('Model Loaded!');
 }
+
+function check(){
+    img = document.getElementById('captured_image');
+    classifier.classify(img,gotResult);
+}
+
+function gotResult(error, results) {
+    if (error) {
+      console.error(error);
+    } else {
+      console.log(results);
+      
+      document.getElementById("result_object_name").innerHTML = results[0].label;
+  
+      gesture = results[0].label;
+      
+      toSpeak = "";
+      
+      if(gesture == "fist closed")
+      {
+        toSpeak = "fist closed";
+        document.getElementById("result_object_gesture_icon").innerHTML = "&#128076;";
+      }
+      else if(gesture == "thumbs up")
+      {
+        toSpeak = "good job";
+        document.getElementById("result_object_gesture_icon").innerHTML = "&#128077;";
+      }
+      else if(gesture == "peace sign")
+      {
+        toSpeak = "pose for the camera";
+        document.getElementById("result_object_gesture_icon").innerHTML = "&#9996;";
+      }
+  
+      speak();
+    }
+  }
+  
+  
+  function speak(){
+      var synth = window.speechSynthesis;
+  
+      speak_data = toSpeak;
+  
+      var utterThis = new SpeechSynthesisUtterance(speak_data);
+  
+      synth.speak(utterThis);
+  
+  }
+  
